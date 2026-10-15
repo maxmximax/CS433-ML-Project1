@@ -1,4 +1,5 @@
 import numpy as np
+from project1.helpers import sigmoid
 
 def compute_mse(y, tx, w):
     """Compute the mean squared error loss (with the 1/2 factor).
@@ -76,4 +77,69 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
         w = w - gamma * compute_mse_gradient(y[i : i + 1], tx[i : i + 1], w)
     # Loss of the returned weights, evaluated on the whole dataset
     loss = compute_mse(y, tx, w)
+    return w, loss
+
+
+def logistic_regression(y, tx, initial_w, max_iters, gamma):
+    """Logistic regression using gradient descent.
+
+    Args:
+        y: numpy array of shape (N,), the labels.
+        tx: numpy array of shape (N, D), the feature matrix.
+        initial_w: numpy array of shape (D,), the initial weights.
+        max_iters: int, the number of gradient steps.
+        gamma: float, the step size.
+
+    Returns:
+        w: numpy array of shape (D,), the final weights.
+        loss: scalar, the MSE loss at the last weight vector.
+    """
+
+    # Initialize weights
+    w = np.array(initial_w, dtype=float, copy=True)
+
+    # Perform gradient descent
+    for _ in range(max_iters):
+        predictions = sigmoid(tx @ w)
+        gradient = tx.T @ (predictions - y) / len(y)
+        w = w - gamma * gradient
+
+    # Compute the loss after the final update
+    z = tx @ w
+    loss = np.mean(np.logaddexp(0, z) - y * z)
+
+    return w, loss
+
+
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+    """Logistic regression with L2 regularization.
+
+    Args:
+        y: numpy array of shape (N,), the labels.
+        tx: numpy array of shape (N, D), the feature matrix.
+        lambda_: Regularization parameter.
+        initial_w: numpy array of shape (D,), the initial weights.
+        max_iters: int, the number of gradient steps.
+        gamma: float, the step size.
+
+    Returns:
+        w: numpy array of shape (D,), the final weights.
+        loss: scalar, the MSE loss at the last weight vector.
+    """
+    # Initialize weights
+    w = np.array(initial_w, dtype=float, copy=True)
+
+    # Perform gradient descent with L2 regularization
+    for _ in range(max_iters):
+        predictions = sigmoid(tx @ w)
+        gradient = (
+            tx.T @ (predictions - y) / len(y)
+            + 2 * lambda_ * w
+        )
+        w = w - gamma * gradient
+
+    # Compute the loss after the final update
+    z = tx @ w
+    loss = np.mean(np.logaddexp(0, z) - y * z)
+
     return w, loss

@@ -70,3 +70,22 @@ def create_csv_submission(ids, y_pred, name):
         writer.writeheader()
         for r1, r2 in zip(ids, y_pred):
             writer.writerow({"Id": int(r1), "Prediction": int(r2)})
+
+
+def sigmoid(z):
+    """
+    Compute the sigmoid without exponential overflow.
+    
+    Args:
+        z: Input array.
+        
+    Returns:
+        Sigmoid of the input array.
+    """
+    exp_neg_abs = np.exp(-np.abs(z))
+
+    return np.where(
+        z >= 0,
+        1.0 / (1.0 + exp_neg_abs),
+        exp_neg_abs / (1.0 + exp_neg_abs),
+    )
