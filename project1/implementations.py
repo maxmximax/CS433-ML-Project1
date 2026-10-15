@@ -140,6 +140,7 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
 
     # Compute the loss after the final update
     z = tx @ w
+    # np.logaddexp(0, z) computes log(1 + exp(z)) in a numerically stable way
     loss = np.mean(np.logaddexp(0, z) - y * z)
 
     return w, loss

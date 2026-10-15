@@ -82,6 +82,7 @@ def sigmoid(z):
     Returns:
         Sigmoid of the input array.
     """
+    # Compute the sigmoid function in a numerically stable way to avoid overflow issues
     exp_neg_abs = np.exp(-np.abs(z))
 
     return np.where(
