@@ -80,6 +80,46 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
     return w, loss
 
 
+def least_squares(y, tx):
+    """Calculate the least squares solution.
+       returns mse, and optimal weights.
+
+    Args:
+        y: numpy array of shape (N,), N is the number of samples.
+        tx: numpy array of shape (N,D), D is the number of features.
+
+    Returns:
+        w: optimal weights, numpy array of shape(D,), D is the number of features.
+        mse: scalar.
+    """
+    
+    # Solving normal equation using np.linalg.solve: (X.T @ X) @ w = X.T @ y
+    A = tx.T @ tx
+    b = tx.T @ y
+    w_opti = np.linalg.solve(A,b) # allow to find x such that Ax = b
+    mse = compute_mse(y, tx, w_opti)
+    return w_opti, float(mse)
+
+
+def ridge_regression(y, tx, lambda_):
+    """implement ridge regression.
+
+    Args:
+        y: numpy array of shape (N,), N is the number of samples.
+        tx: numpy array of shape (N,D), D is the number of features.
+        lambda_: scalar.
+
+    Returns:
+        w: optimal weights, numpy array of shape(D,), D is the number of features.
+    """
+
+    # Normal equation to solve for L2 regularization: (X.T@X + lambda*I)@w = X.T@y
+    aI = 2 * tx.shape[0] * lambda_ * np.identity(tx.shape[1])
+    a = tx.T @ tx + aI
+    b = tx.T @ y
+    return np.linalg.solve(a, b)
+
+
 def logistic_regression(y, tx, initial_w, max_iters, gamma):
     """Logistic regression using gradient descent.
 
