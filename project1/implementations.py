@@ -1,5 +1,23 @@
 import numpy as np
-from project1.helpers import sigmoid
+
+
+def sigmoid(z):
+    """Compute the sigmoid without exponential overflow.
+
+    Args:
+        z: Input array.
+
+    Returns:
+        Sigmoid of the input array.
+    """
+    # exp(-|z|) never overflows; pick the matching formula depending on the sign of z
+    exp_neg_abs = np.exp(-np.abs(z))
+    return np.where(
+        z >= 0,
+        1.0 / (1.0 + exp_neg_abs),
+        exp_neg_abs / (1.0 + exp_neg_abs),
+    )
+
 
 def compute_mse(y, tx, w):
     """Compute the mean squared error loss (with the 1/2 factor).
