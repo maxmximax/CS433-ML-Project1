@@ -15,12 +15,13 @@ import os
 import numpy as np
 
 from helpers import create_csv_submission, load_csv_data
+from implementations import*
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "dataset")
+DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data","dataset_to_release", "dataset")
 CACHE_PATH = os.path.join(DATA_PATH, "cache.npz")
 SUBMISSION_PATH = "submission.csv"
 
@@ -86,12 +87,24 @@ def train_validation_split(n, ratio=VALIDATION_RATIO, seed=SEED):
 # ---------------------------------------------------------------------------
 # Preprocessing
 # ---------------------------------------------------------------------------
+# load the data
+x_train, x_test, y_train, train_ids, test_ids = load_data()
 
+# Split the training set into a train and a validation part, for model selection.
+tr_idx, val_idx = train_validation_split(len(y_train))
 
 
 # ---------------------------------------------------------------------------
 # Model and evaluation
 # ---------------------------------------------------------------------------
+y_binary = (y_train == 1).astype(float) # method of Gatuhier should return 1, -1 not 0,1
+
+
+
+w, loss = reg_logistic_regression(y_binary[tr_idx], x_train[tr_idx, :], 0.1, np.zeros(x_train.shape[1]), 100, 0.1)
+
+y_pred = np.where(x_test @ w >= 0, 1, -1)
+
 
 
 
@@ -99,3 +112,4 @@ def train_validation_split(n, ratio=VALIDATION_RATIO, seed=SEED):
 # Main
 # ---------------------------------------------------------------------------
 
+create_csv_submission(test_ids, y_pred, SUBMISSION_PATH)
