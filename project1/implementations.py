@@ -116,7 +116,7 @@ def least_squares(y, tx):
     b = tx.T @ y
     w_opti = np.linalg.solve(A,b) # allow to find x such that Ax = b
     mse = compute_mse(y, tx, w_opti)
-    return w_opti, float(mse)
+    return w_opti, mse
 
 
 def ridge_regression(y, tx, lambda_):
@@ -129,13 +129,16 @@ def ridge_regression(y, tx, lambda_):
 
     Returns:
         w: optimal weights, numpy array of shape(D,), D is the number of features.
+        loss: scalar, the MSE loss.
     """
 
     # Normal equation to solve for L2 regularization: (X.T@X + lambda*I)@w = X.T@y
     aI = 2 * tx.shape[0] * lambda_ * np.identity(tx.shape[1])
     a = tx.T @ tx + aI
     b = tx.T @ y
-    return np.linalg.solve(a, b)
+    w_opti = np.linalg.solve(a, b)
+    loss_mse = compute_mse(y, tx, w_opti)
+    return w_opti, loss_mse
 
 
 def logistic_regression(y, tx, initial_w, max_iters, gamma):
