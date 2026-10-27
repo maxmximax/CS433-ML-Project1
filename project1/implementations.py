@@ -1,6 +1,7 @@
 import numpy as np
 
 
+
 def sigmoid(z):
     """Compute the sigmoid without exponential overflow.
 
@@ -48,6 +49,80 @@ def compute_mse_gradient(y, tx, w):
     e = y - tx.dot(w)
     return -tx.T.dot(e) / len(y)
 
+
+#---------Helper funcction start for logistic regression-----------
+
+def calculate_loss(y, tx, w):
+    """compute the cost by negative log likelihood.
+
+    Args:
+        y:  shape=(N,)
+        tx: shape=(N, D)
+        w:  shape=(D,)
+
+    Returns:
+        a non-negative loss
+
+    >>> y = np.c_[[0., 1.]]
+    >>> tx = np.arange(4).reshape(2, 2)
+    >>> w = np.c_[[2., 3.]]
+    >>> round(calculate_loss(y, tx, w), 8)
+    1.52429481
+    """
+    assert y.shape[0] == tx.shape[0]
+    assert tx.shape[1] == w.shape[0]
+
+    N = y.shape[0]
+    pred = sigmoid(tx @ w)
+    loss = -1/N * (y.T @ np.log(pred) + (1 - y).T @ np.log(1 - pred))
+    return loss 
+
+def calculate_gradient(y, tx, w):
+    """compute the gradient of loss.
+
+      Args:
+        y:  shape=(N,)
+        tx: shape=(N, D)
+        w:  shape=(D,)
+
+    Returns:
+        a vector of shape (D,)
+
+    >>> np.set_printoptions(8)
+    >>> y = np.array([0., 1.])
+    >>> tx = np.arange(6).reshape(2, 3)
+    >>> w = np.array([0.1, 0.2, 0.3])
+    >>> calculate_gradient(y, tx, w)
+    array([-0.10370763,  0.2067104 ,  0.51712843])
+    """
+
+    N = y.shape[0]
+    pred = sigmoid(tx @ w)
+    grad = 1/N * (tx.T  @ (pred - y))
+    return grad
+
+
+def learning_by_gradient_descent(y, tx, w, gamma):
+    """
+    Do one step of gradient descent using logistic regression. Return the loss and the updated w.
+
+    Args:
+        y:  shape=(N,)
+        tx: shape=(N, D)
+        w:  shape=(D,)
+        gamma: float
+
+    Returns:
+        loss: scalar number
+        w: shape=(D, 1)
+    """
+    loss = calculate_loss(y,tx,w)
+    loss_grad = calculate_gradient(y,tx,w)
+    w_new = w - gamma*loss_grad
+
+    return loss, w_new
+
+#_-----------------------Helper functions end for logistic regression----------------
 
 def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
     """Linear regression using gradient descent.
@@ -141,7 +216,7 @@ def ridge_regression(y, tx, lambda_):
     return w_opti, loss_mse
 
 
-def logistic_regression(y, tx, initial_w, max_iters, gamma):
+def logistic_regression_gauthier(y, tx, initial_w, max_iters, gamma):
     """Logistic regression using gradient descent.
 
     Args:
@@ -169,6 +244,44 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     z = tx @ w
     loss = np.mean(np.logaddexp(0, z) - y * z)
 
+    return w, loss
+
+def logistic_regression(y, tx, initial_w, max_iters, gamma):
+    """Logistic regression using gradient descent.
+
+    Args:
+        y: numpy array of shape (N,), the labels.
+        tx: numpy array of shape (N, D), the feature matrix.
+        initial_w: numpy array of shape (D,), the initial weights.
+        max_iters: int, the number of gradient steps.
+        gamma: float, the step size.
+
+    Returns:
+        w: numpy array of shape (D,), the final weights.
+        loss: scalar, the MSE loss at the last weight vector.
+    """
+
+    # init parameters
+    threshold = 1e-8
+    losses = []
+
+    # build tx
+    w = np.array(initial_w, dtype=float, copy=True)  # shape (D,)
+
+    # start the logistic regression
+    for iter in range(max_iters):
+        # get loss and update w.
+        loss, w = learning_by_gradient_descent(y, tx, w, gamma)
+        # log info
+        if iter % 10 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        # converge criterion
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    
+    print("loss={l}".format(l=calculate_loss(y, tx, w)))
+    
     return w, loss
 
 
