@@ -284,37 +284,34 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     
     return w, loss
 
-
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
-    """Logistic regression with L2 regularization.
+    """L2-regularized logistic regression using gradient descent.
 
     Args:
-        y: numpy array of shape (N,), the labels.
-        tx: numpy array of shape (N, D), the feature matrix.
-        lambda_: Regularization parameter.
-        initial_w: numpy array of shape (D,), the initial weights.
-        max_iters: int, the number of gradient steps.
-        gamma: float, the step size.
+        y: labels in {0, 1}, shape (N,).
+        tx: feature matrix, shape (N, D).
+        lambda_: regularization strength.
+        initial_w: initial weights, shape (D,).
+        max_iters: number of gradient steps.
+        gamma: learning rate.
 
     Returns:
-        w: numpy array of shape (D,), the final weights.
-        loss: scalar, the MSE loss at the last weight vector.
+        w: final weights, shape (D,).
+        loss: mean logistic loss, excluding the penalty.
     """
-    # Initialize weights
     w = np.array(initial_w, dtype=float, copy=True)
 
-    # Perform gradient descent with L2 regularization
-    for _ in range(max_iters):
-        predictions = sigmoid(tx @ w)
-        gradient = (
-            tx.T @ (predictions - y) / len(y)
-            + 2 * lambda_ * w
-        )
-        w = w - gamma * gradient
+    for iteration in range(max_iters):
+        z = tx @ w
 
-    # Compute the loss after the final update
+        # Regularize weights
+        gradient = tx.T @ (sigmoid(z) - y) / len(y)
+        gradient += 2 * lambda_ * w
+
+        w -= gamma * gradient
+
+    # Return the unpenalized loss at the final weights.
     z = tx @ w
-    # np.logaddexp(0, z) computes log(1 + exp(z)) in a numerically stable way
     loss = np.mean(np.logaddexp(0, z) - y * z)
 
-    return w, loss
+    return w, float(loss)
