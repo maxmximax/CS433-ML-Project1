@@ -11,7 +11,7 @@ Pipeline:
 """
 
 import os
-
+import sys
 import numpy as np
 
 from helpers import create_csv_submission, load_csv_data
@@ -30,9 +30,10 @@ SEED = 42  # fixed so that run.py always produces the same submission
 VALIDATION_RATIO = 0.2  # fraction of the training set held out for validation
 
 LAMBDA = 0.001
-MAX_ITERS = 2000
 GAMMA = 0.05
-
+MAX_ITERS = 2000
+LAMBDAS = [1e-4, 1e-3, 1e-2, 1e-1]   # grid used by --tune
+GAMMAS = [0.005, 0.01, 0.05, 0.08, 0.1]
 
 # ---------------------------------------------------------------------------
 # Data loading
@@ -268,6 +269,35 @@ def choose_threshold(y_true, probabilities):
     return float(threshold), float(f1_scores[best_index])
 
 
+def tune_hyperparameters(x_tr, y_tr, x_val, y_val_pm):
+    """Grid search over (lambda, gamma), scored by best validation F1.
+
+    Args:
+        x_tr: Transformed training features, shape (N, D + 1).
+        y_tr: Training labels in {0, 1}, shape (N,).
+        x_val: Transformed validation features.
+        y_val_pm: Validation labels in {-1, 1}.
+
+    Returns:
+        (best_lambda, best_gamma), the pair with the highest validation F1.
+    """
+    results = {}
+    for lambda_ in LAMBDAS:
+        for gamma in GAMMAS:
+            w, _ = reg_logistic_regression(
+                y_tr, x_tr, lambda_, np.zeros(x_tr.shape[1]), MAX_ITERS, gamma
+            )
+            p_val = sigmoid(x_val @ w)
+            if np.all(np.isfinite(p_val)):
+                _, f1 = choose_threshold(y_val_pm, p_val)
+            else:  # training diverged
+                f1 = 0.0
+            results[(lambda_, gamma)] = f1
+            print(f"lambda={lambda_:g}  gamma={gamma:g}  F1={f1:.4f}")
+
+    best = max(results, key=results.get)
+    print(f"\nBest: lambda={best[0]:g}, gamma={best[1]:g}, F1={results[best]:.4f}")
+    return best
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -315,6 +345,12 @@ def main():
 
     x_tr = transform_features(x_train_raw[tr_idx], mean, std)
     x_val = transform_features(x_train_raw[val_idx], mean, std)
+
+    # `python3 run.py --tune`: search lambda and gamma, then stop.
+    if "--tune" in sys.argv:
+        tune_hyperparameters(x_tr, y_binary[tr_idx], x_val, y_train[val_idx])
+        return
+
 
     print("Training the validation model...")
 
