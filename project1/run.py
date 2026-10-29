@@ -29,11 +29,12 @@ SUBMISSION_PATH = os.path.join(BASE_PATH, "submission.csv")
 SEED = 42  # fixed so that run.py always produces the same submission
 VALIDATION_RATIO = 0.2  # fraction of the training set held out for validation
 
-LAMBDA = 0.001
-GAMMA = 0.05
+LAMBDA = 1e-4  # regularization strength
+GAMMA = 0.5    # learning rate for gradient descent
+MAX_ITERS_TUNING = 2000
 MAX_ITERS = 2000
-LAMBDAS = [1e-4, 1e-3, 1e-2, 1e-1]   # grid used by --tune
-GAMMAS = [0.005, 0.01, 0.05, 0.08, 0.1]
+LAMBDAS = [1e-4, 1e-3, 1e-2]   # grid used by --tune
+GAMMAS = [0.5, 0.8 ,0.05, 0.1, 0.2]   # grid used by --tune 
 
 # ---------------------------------------------------------------------------
 # Data loading
@@ -285,7 +286,7 @@ def tune_hyperparameters(x_tr, y_tr, x_val, y_val_pm):
     for lambda_ in LAMBDAS:
         for gamma in GAMMAS:
             w, _ = reg_logistic_regression(
-                y_tr, x_tr, lambda_, np.zeros(x_tr.shape[1]), MAX_ITERS, gamma
+                y_tr, x_tr, lambda_, np.zeros(x_tr.shape[1]), MAX_ITERS_TUNING, gamma
             )
             p_val = sigmoid(x_val @ w)
             if np.all(np.isfinite(p_val)):
