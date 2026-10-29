@@ -182,16 +182,13 @@ def least_squares(y, tx):
         tx: numpy array of shape (N,D), D is the number of features.
 
     Returns:
-        w: optimal weights, numpy array of shape(D,), D is the number of features.
-        mse: scalar.
+        w: optimal weights, numpy array of shape (D,), D is the number of features.
+        loss: scalar, the MSE loss.
     """
-    
-    # Solving normal equation using np.linalg.solve: (X.T @ X) @ w = X.T @ y
     A = tx.T @ tx
     b = tx.T @ y
-    w_opti = np.linalg.solve(A,b) # allow to find x such that Ax = b
-    mse = compute_mse(y, tx, w_opti)
-    return w_opti, mse
+    w = np.linalg.pinv(A) @ b
+    return w, compute_mse(y, tx, w)
 
 
 def ridge_regression(y, tx, lambda_):
